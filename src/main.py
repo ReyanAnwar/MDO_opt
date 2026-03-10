@@ -114,10 +114,10 @@ def aero(wingspan, mid_chord, tip_chord, root_twist, mid_twist, tip_twist, spar_
 
     # Create input file for FreeWake
     freewake_input(wingspan, mid_chord, tip_chord, root_twist, mid_twist, tip_twist, W, deflect_tip, deflect_mid)
-    df_fw_init, _ = freewake_run()
+    df_perf, _ = freewake_run()
 
     # Fit second-order curve to airspeed vs. power
-    coefficients, _ = curve_fit(power_eqn, df_fw_init['Vinf'], df_fw_init['Preq'])
+    coefficients, _ = curve_fit(power_eqn, df_perf['Vinf'], df_perf['Preq'])
     a_fit, b_fit, c_fit = coefficients
 
     # Find speed for max range
@@ -130,7 +130,7 @@ def aero(wingspan, mid_chord, tip_chord, root_twist, mid_twist, tip_twist, spar_
     # CL = W/(0.5*1.225*(V_maxR**2)*wingspan)
     # CL_alpha = (2*np.pi)*(AR/(AR+2))
     # aoa_maxR = np.rad2deg(CL/CL_alpha)
-    f_aoa_max = interp1d(df_fw_init['Vinf'],df_fw_init['alpha'],kind='linear')
+    f_aoa_max = interp1d(df_perf['Vinf'],df_perf['alpha'],kind='linear')
     aoa_maxR = f_aoa_max(V_maxR)
 
     freewake_input(wingspan, mid_chord, tip_chord, root_twist, mid_twist, tip_twist, W, deflect_tip, deflect_mid, aoa_maxR, aoa_maxR, 1)
