@@ -94,6 +94,8 @@ def solve_structure(span,
                     spar_mat,
                     skin_mat,
                     lift_distribution):
+    
+    lift_distribution = lift_distribution[:19]
 
     half_span = span/2
 

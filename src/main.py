@@ -192,7 +192,7 @@ def mat_index(i):
         return 'carbon'
     
 
-def cost_func(wingspan, mid_chord, tip_chord, t_skin, root_twist, mid_twist, tip_twist, skin_index, spar_index):
+def cost_func(wingspan, mid_chord, tip_chord, w_flange, t_flange, t_web, t_skin, root_twist, mid_twist, tip_twist, skin_index, spar_index):
     # cost function as a function of all 9 design variables (10 because I assumed skin and spar materials are independent)
 
     # Initial run of range and cost functions with initial conitions of optimization variables
@@ -203,13 +203,13 @@ def cost_func(wingspan, mid_chord, tip_chord, t_skin, root_twist, mid_twist, tip
     spar_mat = mat_index(spar_index)
 
     # Initial guess of skin and spar volumes for first run of aero model
-    spar_volume = 0.303*0.15*0.05*wingspan
+    spar_volume = wingspan*((t_flange*w_flange*2) + (t_web*(0.303*0.15-(2*t_skin))))
     S = wing_area(wingspan, mid_chord, tip_chord)
     skin_volume = 2*S*t_skin
 
     # Initial guess of weight
-    mass = total_mass(spar_volume, skin_volume, spar_mat, skin_mat)
-    weight = mass*9.81
+    mass_tot = total_mass(spar_volume, skin_volume, spar_mat, skin_mat)
+    weight = mass_tot*9.81
 
     # First run of aero model assuming no tip deflection
     V_maxR, Preq, y_loc, y_load = aero(weight, wingspan, mid_chord, tip_chord, root_twist, mid_twist, tip_twist, 0, 0)
@@ -217,18 +217,21 @@ def cost_func(wingspan, mid_chord, tip_chord, t_skin, root_twist, mid_twist, tip
     load_cond = 1.5*weight
 
     # Loop between aero model and structure model until loading is greater than acceptable load
-    while (wing_load < load_cond):
-        # run structure model with loading
-        deflect_mid, deflect_tip, spar_volume, skin_volume, max_stress, mass_tot = solve_structure(wingspan, 0.15, mid_chord, tip_chord, t_skin, spar_mat, skin_mat, y_load)
+    # not sure if we need ths loop, nothing is being changed between loops
+    # while (wing_load < load_cond):
+    # run structure model with loading
+    deflect_mid, deflect_tip, spar_volume, skin_volume, max_stress, mass_tot = solve_structure(wingspan, 0.15, mid_chord, tip_chord, t_skin, spar_mat, skin_mat, y_load)
 
-        weight = mass_tot*9.81
+    weight = mass_tot*9.81
 
-        # run aero model with new mass to get loading
-        V_maxR, Preq, y_loc, y_load = aero(weight, wingspan, mid_chord, tip_chord, root_twist, mid_twist, tip_twist, deflect_tip, deflect_mid)
+    # run aero model with new mass to get loading
+    V_maxR, Preq, y_loc, y_load = aero(weight, wingspan, mid_chord, tip_chord, root_twist, mid_twist, tip_twist, deflect_tip, deflect_mid)
 
-        # check if results of loading are acceptable for new mass
-        wing_load = np.trapezoid(y_load,y_loc)
-        load_cond = 1.5*weight
+    # check if results of loading are acceptable for new mass
+    wing_load = np.trapezoid(y_load,y_loc)
+    load_cond = 1.5*weight
+    
+    web_height = (0.303*0.15) - (2*t_skin) - (2*t_flange)
 
     # Range model (with aero model)
     range_est = range(V_maxR, Preq)
@@ -238,24 +241,32 @@ def cost_func(wingspan, mid_chord, tip_chord, t_skin, root_twist, mid_twist, tip
 
     # Implement costraints
     scale = 1
-    if wingspan < (0.15*2):
+    # if wingspan < (0.15*2):
+    #     scale *= 0.1
+    if wing_load < load_cond:
         scale *= 0.1
     if mass_tot > 10:
         scale *= 0.1
     if price_est > 1000:
         scale *= 0.1
-    if root_twist < -5:
+    if range_est < 0:
         scale *= 0.1
-    if root_twist > 0:
-        scale *=0.1
-    if mid_twist < -5:
+    if web_height < 0:
         scale *= 0.1
-    if mid_twist > 0:
-        scale *=0.1
-    if tip_twist < -5:
+    if deflect_tip < (0.15*(wingspan/2)):
         scale *= 0.1
-    if tip_twist > 0:
-        scale *=0.1
+    # if root_twist < -5:
+    #     scale *= 0.1
+    # if root_twist > 0:
+    #     scale *=0.1
+    # if mid_twist < -5:
+    #     scale *= 0.1
+    # if mid_twist > 0:
+    #     scale *=0.1
+    # if tip_twist < -5:
+    #     scale *= 0.1
+    # if tip_twist > 0:
+    #     scale *=0.1
 
     # Minimize this function (maximizes range, minimizes price, equally weighted)
     # costs = (-range_est/desired_range) + (price_est/desired_cost)
