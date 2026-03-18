@@ -31,8 +31,7 @@ class carbon:
     def __init__(self):
         self.name = self.__class__.__name__
         self.price = 12 # USD/kg
-        self.E_1 = 77.2 # GPa
-        self.E_2 = 77.2 # GPa
-        self.G = 2.211 # GPa
+        self.E = 110 # GPa
+        self.rho = 1.7e-3 # kg/m^3
+        self.sigma_allow = 1379 # MPa
         self.nu = 0.25
-        self.rho = 4.71e-3 # kg/m^3

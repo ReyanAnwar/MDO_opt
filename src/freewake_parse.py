@@ -3,8 +3,9 @@
 import subprocess
 import pandas as pd
 import os
+import math
 
-def freewake_input(span, chord_mid, chord_tip, twist_root, twist_mid, twist_tip, weight, deflect_tip=0, deflect_mid=0, alpha_min=0.5, alpha_max=10, alpha_delta=0.5):
+def freewake_input(span, chord_mid, chord_tip, twist_mid, twist_tip, weight, deflect_tip=0, deflect_mid=0, alpha_min=0.5, alpha_max=10, alpha_delta=0.5):
 
     chord_root = 0.15
     area = (((chord_mid+chord_tip)/2)*(span/4) + ((chord_mid+chord_root)/2)*(span/4))*2
@@ -25,7 +26,7 @@ def freewake_input(span, chord_mid, chord_tip, twist_root, twist_mid, twist_tip,
         f.write("\nRelaxed wake (yes 1, no 0): relax = 0 \n")
         f.write("Steady (1) or unsteady (2): aerodynamics = 1 \n")
         f.write("Viscous solutions (1) or inviscid (0) viscous = 1 \n")
-        f.write("Symmetrical geometry (yes 1, no 0): sym = 0 \n")
+        f.write("Symmetrical geometry (yes 1, no 0): sym = 1 \n")
         f.write("Longitudinal trim (yes 1, no 0): trim = 0 (yes means m has to be 1) \n \n")
 
 
@@ -52,7 +53,7 @@ def freewake_input(span, chord_mid, chord_tip, twist_root, twist_mid, twist_tip,
 
 
         f.write("No. of wings (max. 5): wings = 1 \n")
-        f.write("No. of panels:	panels = 4 \n")
+        f.write("No. of panels:	panels = 2 \n")
         f.write("No. of chordwise lifting lines: m = 1 \n")
         f.write("No. of airfoils (max. 15):	airfoils = 10 \n \n")
 
@@ -62,33 +63,33 @@ def freewake_input(span, chord_mid, chord_tip, twist_root, twist_mid, twist_tip,
         f.write("Free end - 		100\n \n")
 
 
-        f.write("Panel #:1. Number of spanwise elements (n) = 10 \n")
+        f.write("Panel #:1. Number of spanwise elements (n) = 2 \n")
         f.write("Neighbouring panels (0 for none) left: 0 right: 2 \n")
         f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
         f.write(f"{wing_x_tip}	{-wing_y_half}	{deflect_tip}	{chord_tip}		{twist_tip}	100			1 \n")
         f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
         f.write(f"{wing_x_mid}	{-wing_y_quart}	{deflect_mid}   {chord_mid}		{twist_mid}	220			1 \n \n")
 
-        f.write("Panel #:2. Number of spanwise elements (n) = 10 \n")
-        f.write("Neighbouring panels (0 for none) left: 1 right: 3 \n")
+        f.write("Panel #:2. Number of spanwise elements (n) = 2 \n")
+        f.write("Neighbouring panels (0 for none) left: 1 right: 0 \n")
         f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
         f.write(f"{wing_x_mid}	{-wing_y_quart}	{deflect_mid}	{chord_mid}		{twist_mid}	220			1 \n")
         f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
-        f.write(f"{wing_x_root}	0.000	        0.000	        {chord_root}	{twist_root}	220			1 \n \n")
+        f.write(f"{wing_x_root}	0.000	        0.000	        {chord_root}	0	        10			1 \n \n")
 
-        f.write("Panel #:3. Number of spanwise elements (n) = 10 \n")
-        f.write("Neighbouring panels (0 for none) left: 2 right: 4 \n")
-        f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
-        f.write(f"{wing_x_root}	0.000	        0.000	        {chord_root}	{twist_root}    220			1 \n")
-        f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
-        f.write(f"{wing_x_mid}	{wing_y_quart}	{deflect_mid}   {chord_mid}		{twist_mid}	220			1 \n \n")
+        # f.write("Panel #:3. Number of spanwise elements (n) = 2 \n")
+        # f.write("Neighbouring panels (0 for none) left: 2 right: 4 \n")
+        # f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
+        # f.write(f"{wing_x_root}	0.000	        0.000	        {chord_root}	{twist_root}    220			1 \n")
+        # f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
+        # f.write(f"{wing_x_mid}	{wing_y_quart}	{deflect_mid}   {chord_mid}		{twist_mid}	220			1 \n \n")
 
-        f.write("Panel #:4. Number of spanwise elements (n) = 10 \n")
-        f.write("Neighbouring panels (0 for none) left: 3 right: 0 \n")
-        f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
-        f.write(f"{wing_x_mid}	{wing_y_quart}	{deflect_mid}   {chord_mid}		{twist_mid}	220			1 \n")
-        f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
-        f.write(f"{wing_x_tip}	{wing_y_half}	{deflect_tip}	{chord_tip}		{twist_tip}	100			1 \n \n")
+        # f.write("Panel #:4. Number of spanwise elements (n) = 2 \n")
+        # f.write("Neighbouring panels (0 for none) left: 3 right: 0 \n")
+        # f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
+        # f.write(f"{wing_x_mid}	{wing_y_quart}	{deflect_mid}   {chord_mid}		{twist_mid}	220			1 \n")
+        # f.write("xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil \n")
+        # f.write(f"{wing_x_tip}	{wing_y_half}	{deflect_tip}	{chord_tip}		{twist_tip}	100			1 \n \n")
 
         f.write("Tail area is 0 m^2 \n \n")
 
@@ -133,7 +134,7 @@ def freewake_run(aoa=None):
         filename = f"AOA{aoa:.2f}.txt"
         force_base_path = r"C:/Users/mayar/Documents/Ryerson/AALOFT/Freewake(in_use)/output"
         force_output_path = os.path.join(force_base_path,filename)
-        df_force = pd.read_csv(force_output_path, skiprows=4, sep=r'\s+', nrows=40, header=None, names=aoa_col)
+        df_force = pd.read_csv(force_output_path, skiprows=4, sep=r'\s+', nrows=8, header=None, names=aoa_col)
     else:
         df_force = []
 
