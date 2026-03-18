@@ -99,7 +99,7 @@ def aero(weight, wingspan, mid_chord, tip_chord, mid_twist, tip_twist, deflect_t
     if df_clean.empty or df_clean.shape[0]<3:
         V_maxR = 1
         Preq = 1e3
-        y_pos = np.linspace(-(wingspan/2)+(wingspan/16),0-(wingspan/16),4)
+        y_pos = np.linspace((wingspan/16),(wingspan/2)-(wingspan/16),4)
         y_load = np.ones(len(y_pos))*1e3
     else:
 
@@ -124,7 +124,7 @@ def aero(weight, wingspan, mid_chord, tip_chord, mid_twist, tip_twist, deflect_t
         else:
             V_maxR = 1
             Preq = 1e3
-            y_pos = np.linspace(-(wingspan/2)+(wingspan/16),0-(wingspan/16),4)
+            y_pos = np.linspace((wingspan/16),(wingspan/2)-(wingspan/16),4)
             y_load = np.ones(len(y_pos))*1e3     
 
     return V_maxR, Preq, y_pos, y_load
@@ -225,9 +225,9 @@ def cost_func(wingspan, mid_chord, tip_chord, w_flange, t_flange, t_web, t_skin_
     # if wing_load < load_cond:
     #     penalty = penalty + 10
     if mass_tot > 10:
-        penalty += ((mass_tot-10)/10)*10
+        penalty += ((mass_tot-10)/10)*10 # penalty as a ratio of how much over the limit mass is
     if price_est > 1000:
-        penalty += ((price_est-1000)/1000)*10
+        penalty += ((price_est-1000)/1000)*10 # penalty as a ratio of how much over the limit price is
     if deflect_tip < (0.15*(wingspan/2)):
         penalty += ((deflect_tip-(0.15*(wingspan/2)))/(0.15*(wingspan/2)))*20
 
