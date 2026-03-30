@@ -13,6 +13,15 @@ import shutil
 import tempfile
 
 def material_costs(mat):
+    """
+    Return material price given material name
+
+    Inputs:
+        mat = material name, string
+    
+    Returns:
+        price = cost (USD) per kg of material
+    """
 
     if mat == 'pla':
         material = materials.pla()
@@ -29,6 +38,15 @@ def material_costs(mat):
 
 
 def material_density(mat):
+    """
+    Return material density given material name
+    
+    Inputs:
+        mat = material name, string
+    
+    Returns:
+        density = density of material (kg/m^3)
+    """
 
     if mat == 'pla':
         material = materials.pla()
@@ -45,6 +63,12 @@ def material_density(mat):
 
 
 def battery(parallel, series):
+    """
+    Battery pack energy, price and mass for a given number of cells in parallel and in series,
+    pack is designed for 21700 cells with a battery efficiency of 88%
+
+    
+    """
 
     # 21700 cell parameters
     cap_cell = 5000
@@ -86,7 +110,6 @@ def power_eqn(V, a, b, c):
 
 def aero(freewake_folder, weight, wingspan, mid_chord, tip_chord, mid_twist, tip_twist, deflect_tip, deflect_mid):
 
-    # fw_output_flder = r'C:\Users\mayar\Documents\Ryerson\Grad Classes\AE8139 MDO\MDO_opt\src\fw\output'
     fw_output_folder = os.path.join(freewake_folder,f"output")
     if os.path.exists(fw_output_folder):
         shutil.rmtree(fw_output_folder)
@@ -96,9 +119,9 @@ def aero(freewake_folder, weight, wingspan, mid_chord, tip_chord, mid_twist, tip
     freewake_input(freewake_folder, wingspan, mid_chord, tip_chord, mid_twist, tip_twist, weight, deflect_tip, deflect_mid)
     df_perf, _ = freewake_run(freewake_folder)
 
-    # Fit second-order curve to airspeed vs. power
+    # Fit second-order curve to airspeed vs. power-required
     df_clean = df_perf.dropna()
-    if df_clean.empty or df_clean.shape[0]<3:
+    if df_clean.empty or df_clean.shape[0]<4:
         V_maxR = 1
         Preq = 1e3
         y_pos = np.linspace((wingspan/16),(wingspan/2)-(wingspan/16),4)
@@ -133,6 +156,19 @@ def aero(freewake_folder, weight, wingspan, mid_chord, tip_chord, mid_twist, tip
     
 
 def price(spar_mat, skin_mat, spar_volume, skin_volume):
+    """
+    Calculates total price of aircraft as a function of volumes of materials used to construct wing spar
+    and wing skin, each constructed with their respective materials
+
+    Inputs:
+        spar_mat = spar material, string
+        skin_mat = skin material, string
+        spar_volume = total volume of spar, m^3
+        skin_volume = total volume of skin, m^3
+    
+    Returns:
+        total_price = price of UAV including battery cost and fixed fuselage, empennage, and avionics cost, USD
+    """
     # total price as a function of materials, spar volume, and skin volume
 
     # CONSTANT cost of fuselage, empennage, avionics
@@ -156,7 +192,17 @@ def price(spar_mat, skin_mat, spar_volume, skin_volume):
     return total_price
 
 def range_km(V_maxR, Preq):
-    # CONSTANTS
+    """
+    Range calculation given airspeed and power required, assumes a constant powertrain efficiency of 70% and
+    a 6S6P battery pack made with 21700 cells each having a capacity of 5000mAh
+
+    Inputs:
+        V_maxR = airspeed, speed for max range (m/s)
+        Preq = power required at the given airspeed (W)
+    
+    Returns:
+        R = range, assuming zero wind (km)
+    """
     eta_p = 0.7 # powertrain efficiency
 
     # Battery parameters
@@ -167,6 +213,15 @@ def range_km(V_maxR, Preq):
     return R
 
 def mat_index(i):
+    """
+    Select material given index value for optimizer
+
+    Input:
+        i = Discrete value between 0 and 3, corresponding to a material
+    
+    Returns:
+        string of material name, used to identify material and properties in materials.py database
+    """
     if i==0:
         return 'pla'
     if i==1:
@@ -178,7 +233,29 @@ def mat_index(i):
     
 
 def cost_func(wingspan, mid_chord, tip_chord, w_flange, t_flange, t_web, t_skin_root, t_skin_mid, t_skin_tip, mid_twist, tip_twist, skin_index, spar_index):
-    # cost function as a function of all 9 design variables (10 because I assumed skin and spar materials are independent)
+
+    """
+    Solve minimizing cost function given values of design variables, to be used in an optimizer. Cost function minimizes cost and
+    maximizes range for a given wing and structure design.
+
+    Inputs:
+        wingspan = total wing span (m)
+        mid_chord = chord at half of wing half-span (m)
+        tip_chord = chord at wing tip (m)
+        t_skin_root = skin thickness at wing root (m)
+        t_skin_mid = skin thickness at half of wing half-span (m)
+        t_skin_tip = skin thickness at wing tip (m)
+        t_flange = flange thickness at wing root (m)
+        w_flange = flange width at wing root (m)
+        t_web = web thickness at wing root (m)
+
+
+    Returns:
+        costs = output value of cost function
+        range_est = range estimate for given UAV configuration
+        mass_tot = total UAV mass
+        deflect_tip = final tip deflection for given spar geometry and aerodynamic loads
+    """
 
     # create a copy of freewake to run for this generation
     fw_source = r"C:\Users\mayar\Documents\Ryerson\Grad Classes\AE8139 MDO\MDO_opt\src\fw"
@@ -189,8 +266,11 @@ def cost_func(wingspan, mid_chord, tip_chord, w_flange, t_flange, t_web, t_skin_
         new_fw_folder = shutil.copytree(fw_source, fw_temp_folder)
 
         # Initial run of range and cost functions with initial conitions of optimization variables
-        desired_range = 650.43
-        desired_price = 8.78
+        # desired_price = 650.43
+        # desired_range = 8.78
+        desired_price = 600
+        desired_range = 1000
+        desired_mass = 10
 
         skin_mat = mat_index(skin_index)
         spar_mat = mat_index(spar_index)
@@ -205,53 +285,58 @@ def cost_func(wingspan, mid_chord, tip_chord, w_flange, t_flange, t_web, t_skin_
 
         # First run of aero model assuming no tip deflection
         V_maxR, Preq, y_loc, y_load_old = aero(new_fw_folder, weight, wingspan, mid_chord, tip_chord, mid_twist, tip_twist, 0, 0)
-        deflect_old = 0
+
+        # print(f"Speed for max range: {V_maxR:.2f}")
+
+        deflect_old = 0.00001
         deflection_delta = 1
         # print(f"Load Dist:{y_load_old}")
+        i = 0
 
         # Loop between aero model and structure model until deflections converge
-        while (deflection_delta > 1e-5):
+        # while (deflection_delta > 0.05):
+        while (i<3):
             # fix the spar in this loop
-            deflect_mid, deflect_tip, spar_volume, skin_volume, max_stress = solve_structure(wingspan, 0.15, mid_chord, tip_chord, t_skin_root, t_skin_mid, t_skin_tip, spar_mat, skin_mat, w_flange, t_flange, t_web, y_loc, y_load_old)
+            deflect_mid, deflect_tip, _, _, max_stress = solve_structure(wingspan, 0.15, mid_chord, tip_chord, t_skin_root, t_skin_mid, t_skin_tip, spar_mat, skin_mat, w_flange, t_flange, t_web, y_loc, y_load_old)
 
             # run aero model with new mass to get loading
             V_maxR, Preq, y_loc, y_load_new = aero(new_fw_folder, weight, wingspan, mid_chord, tip_chord, mid_twist, tip_twist, deflect_tip, deflect_mid)
 
-            deflection_delta = np.abs(deflect_tip - deflect_old)
+            # deflection_delta = np.abs(deflect_tip - deflect_old)
+            # try percent deflection
+            deflection_delta = np.abs(deflect_tip-deflect_old)/deflect_old
 
             deflect_old = deflect_tip
             y_load_old = y_load_new
 
-            # print(f"Tip deflection:{deflect_tip:.5f}")
+            # print(f"Tip deflection:{i}|{deflect_tip:.5f}")
+            i = i+1
 
         # Range model (with aero model)
         range_est = range_km(V_maxR, Preq)
+        # print(f"Range: {range_est:.2f} km")
 
         # Price model
-        price_est = price(spar_mat, skin_mat, spar_volume, skin_volume)
+        # price_est = price(spar_mat, skin_mat, spar_volume, skin_volume)
+        # print(f"Price: ${price_est:.2f}")
 
         # Implement costraints
         penalty = 0
-        # if wing_load < load_cond:
-        #     penalty = penalty + 10
         if mass_tot > 10:
             penalty += ((mass_tot-10)/10)*10 # penalty as a ratio of how much over the limit mass is
-        if price_est > 1000:
-            penalty += ((price_est-1000)/1000)*10 # penalty as a ratio of how much over the limit price is
+        # if price_est > 1000:
+        #     penalty += ((price_est-1000)/1000)*10 # penalty as a ratio of how much over the limit price is
         if deflect_tip > (0.15*(wingspan/2)):
             penalty += ((deflect_tip-(0.15*(wingspan/2)))/(0.15*(wingspan/2)))*20
 
         # Minimize this function (maximizes range, minimizes price, equally weighted)
-        # costs = (-range_est/desired_range) + (price_est/desired_cost)
-        # For pygad, the fitness function must be maximized so swap signs
-        costs = (price_est/desired_price) - (range_est/desired_range) + penalty
-
-        # help function be a convex function
-        # divide range by first estimate, divide cost by first estimate, use initial run
+        # For pygad, the fitness function must be maximized so negate cost
+        # costs = (price_est/desired_price) - (range_est/desired_range) + penalty
+        costs = (mass_tot/desired_mass) - (range_est/desired_range) + penalty
 
         shutil.rmtree(temp_dir)
 
-    return costs
+    return costs, range_est, mass_tot, deflect_tip
 
 
 def aero_cost(wingspan, mid_chord, tip_chord, mid_twist, tip_twist):
@@ -265,10 +350,6 @@ def aero_cost(wingspan, mid_chord, tip_chord, mid_twist, tip_twist):
     range_est = range_km(V_maxR, Preq)
     if mass_tot > 10:
         pen_mass = (mass_tot-10)*(-10)
-    # if range_est < 0:
-    #     pen_range = (range_est*10)
-    
-    # to be maximized
     costs = range_est 
 
     return costs
@@ -287,5 +368,18 @@ def aero_gradient_cost(wingspan, mid_chord, tip_chord, mid_twist, tip_twist):
     # mass_penalty = max(0, mass_tot)
 
     costs = (1/range_est)
+
+    return costs
+
+def aero_CDi(mid_chord, tip_chord):
+    # minimize cdi at a fixed cl, inviscid, 0.8
+    wingspan = 5
+    S = wing_area(wingspan, mid_chord, tip_chord)
+    V_maxR, Preq, _, _ = aero(1, 5, mid_chord, tip_chord, 0, 0, 0, 0)
+
+    
+    # mass_penalty = max(0, mass_tot)
+
+    costs = (1/Preq)
 
     return costs

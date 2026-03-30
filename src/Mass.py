@@ -23,6 +23,20 @@ def get_density(mat):
 
 
 def spar_area(chord, t_skin, t_flange, w_flange, t_web):
+    """
+    Calculate spar area at a given chord location for given structural dimensions
+
+    Inputs:
+        chord = chord at spanwise position (m)
+        t_skin = skin thickness at spanwise position (m)
+        t_flange = flange thickness at spanwise position (m)
+        w_flange = flange width at spanwise position (m)
+        t_web = web thickness at spanwise position (m)
+    
+    Returns:
+        a_spar = spar area (m^3)
+        
+    """
     
     thickness = 0.303*chord
     h_web = thickness - (2*t_skin) - (2*t_flange)
@@ -30,57 +44,26 @@ def spar_area(chord, t_skin, t_flange, w_flange, t_web):
     
     return a_spar
 
-def spar_y_area(y_ratio, a_spar_inbd, a_spar_outbd):
-
-    a_y_spar = a_spar_inbd - (a_spar_inbd-a_spar_outbd)*(y_ratio)
-    
-    return a_y_spar
-
-def spar_vol(wingspan, mid_chord, tip_chord, t_skin_root, t_skin_mid, t_skin_tip, t_flange, w_flange, t_web):
-    
-    a_spar_root = spar_area(0.15, t_skin_root, t_flange, w_flange, t_web)
-    a_spar_mid = spar_area(mid_chord, t_skin_mid, t_flange, w_flange, t_web)
-    a_spar_tip = spar_area(tip_chord, t_skin_tip, t_flange, w_flange, t_web)
-
-    half_span = wingspan/2
-    y_pos = np.linspace(0,half_span,100)
-
-    a_y_spar = np.zeros(len(y_pos))
-    for i in range(len(y_pos)):
-        if (y_pos[i] < half_span/2):
-            y_local = y_pos[i]/(half_span/2)
-            # a_spar_root = spar_area(0.15, t_skin_root, t_flange, w_flange, t_web)
-            a_y_spar[i] = spar_y_area(y_local, a_spar_root, a_spar_mid)
-        else:
-            y_local = (y_pos[i]/(half_span/2))/(half_span/2)
-            a_y_spar[i] = spar_y_area(y_local, a_spar_mid, a_spar_tip)
-
-    v_spar = (np.trapezoid(a_y_spar, y_pos))*2
-
-    return v_spar
-
-def skin_vol(wingspan, mid_chord, tip_chord, t_skin_root, t_skin_mid, t_skin_tip):
-
-    half_span = wingspan/2
-    y_pos = np.linspace(0,half_span,100)
-
-    chord_y = np.zeros(len(y_pos))
-    thickness_y = np.zeros(len(y_pos))
-    for i in range(len(y_pos)):
-        if (y_pos[i] < half_span/2):
-            y_local = y_pos[i]/(half_span/2)
-            chord_y[i] = 0.15 + (mid_chord-0.15)*y_local
-            thickness_y[i] = t_skin_root + (t_skin_mid-t_skin_root)*y_local
-        else:
-            y_local = (y_pos[i]/(half_span/2))/(half_span/2)
-            chord_y[i] = mid_chord + (tip_chord-mid_chord)*y_local
-            thickness_y[i] = t_skin_mid + (t_skin_tip-t_skin_mid)*y_local
-
-    v_skin = (np.trapezoid(2*chord_y*thickness_y, y_pos))*2
-
-    return v_skin
-
 def struct_vol(wingspan, mid_chord, tip_chord, t_skin_root, t_skin_mid, t_skin_tip, t_flange, w_flange, t_web):
+    """
+    Calculate structural volume of spar and skin
+
+    Input:
+        wingspan = total wing span (m)
+        mid_chord = chord at half of wing half-span (m)
+        tip_chord = chord at wing tip (m)
+        t_skin_root = skin thickness at wing root (m)
+        t_skin_mid = skin thickness at half of wing half-span (m)
+        t_skin_tip = skin thickness at wing tip (m)
+        t_flange = flange thickness at wing root (m)
+        w_flange = flange width at wing root (m)
+        t_web = web thickness at wing root (m)
+
+    Returns:
+        v_spar = total spar volume (m^3)
+        v_skin = total skin volume (m^3)
+
+    """
 
     half_span = wingspan/2
     y_pos = np.linspace(0,half_span,100)
@@ -98,7 +81,6 @@ def struct_vol(wingspan, mid_chord, tip_chord, t_skin_root, t_skin_mid, t_skin_t
             w_flange_y = (w_flange/0.15)*chord_y[i]
             t_web_y = (t_web/0.15)*chord_y[i]
             a_y_spar[i] = spar_area(chord_y[i], thickness_y[i], t_flange_y, w_flange_y, t_web_y)
-            # a_y_spar[i] = spar_y_area(y_local, a_spar_root, a_spar_mid)
         else:
             y_local = (y_pos[i]-(half_span/2))/(half_span/2)
             chord_y[i] = mid_chord + (tip_chord-mid_chord)*y_local

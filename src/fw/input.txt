@@ -15,16 +15,16 @@ Width of each time step (sec):	deltime = 100.1
 Convergence delta-span effic.:	deltae = 0.00 (0 if onlytimestepping) 
  
 Freestream velocity (leave value 1): Uinf = 1.0 
-AOA beginning, end, step size [deg]: alpha	= 4.71 4.71 1 
+AOA beginning, end, step size [deg]: alpha	= 7.13 7.13 1 
 Sideslip angle [deg]: beta	= 0.0 
 Density: density =	1.225 
 Kinematic viscosity: nu = 1.4600000e-05 
  
-Reference area: S = 0.38065000000000004 
-Reference span: b = 3.31 
+Reference area: S = 0.3 
+Reference span: b = 2 
  
 Mean aerodynamic chord: cmac = 0.15 
-Aircraft weight (N): W = 5 
+Aircraft weight (N): W = 91.919954079 
 CG location (x y z): cg = 0.0525 0.000000000 0.000000000 
 CMo of wing: CMo = 0.000000000 
  
@@ -43,14 +43,14 @@ Neighbouring panels (0 for none) left: 0 right: 2
 xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil 
 0.0	0.000	        0.00	        0.15	0.00    	10			1 
 xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil 
-0.006059999999999996	0.8275	0   0.13		-1.4	220			1 
+0.0	0.5	10.026297400817278   0.15		0	220			1 
  
 Panel #:2. Number of spanwise elements (n) = 2 
 Neighbouring panels (0 for none) left: 1 right: 0 
 xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil 
-0.006059999999999996	0.8275	0	0.13		-1.4	220			1 
+0.0	0.5	10.026297400817278	0.15		0	220			1 
 xleft	        yleft	        zleft	        chord	        epsilon	    Bound.Cond. Airfoil 
-0.030299999999999997	1.655	0	0.05	    -0.3	100			1 
+0.0	1.0	15.840771890973024	0.15	    0	100			1 
  
 Tail area is 0 m^2 
  
